@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from flask.testing import FlaskClient
 
 from src.http import ExtensionData
@@ -19,24 +22,18 @@ def test_graphql_route_not_persisting(client: FlaskClient):
 
 
 def test_graphql_route_no_persisted_query_step1(client):
-    import hashlib
-    import json
+    query = "{ __typename }"
 
-    valid_query = "{ hello }"
-    query_hash = hashlib.sha256(valid_query.encode())
+    # Convert the query into a hash
+    query_hash: str = hashlib.sha256(query.encode()).hexdigest()
+    data: ExtensionData = {"version": 1, "sha256Hash": query_hash}
 
-    data: ExtensionData = {"version": 1, "sha256Hash": query_hash.hexdigest()}
-    #
-    # jsonstring = json.dumps(data)
-
-    # with
     # https://stackoverflow.com/questions/38747784/how-to-set-request-args-with-flask-test-client
     result = client.get(
         "/graphql",
         content_type="application/json",
         query_string={"extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data})},
     )
-
     # Load up the data
     response = result.data.decode()
 

@@ -1,6 +1,9 @@
 # strawberry-apollo-apq
 Supporting [Apollo's automatic persisted queries](https://www.apollographql.com/docs/apollo-server/performance/apq/)
 in [Strawberry GraphQL](https://github.com/strawberry-graphql/strawberry) 🍓
+
+[![codecov](https://codecov.io/gh/basvandriel/strawberry-apollo-apq/branch/main/graph/badge.svg?token=9LERDLNBE5)](https://codecov.io/gh/basvandriel/strawberry-apollo-apq)
+
 ## Notes
 
 - Don't use this for production yet, unless you know what you're doing.

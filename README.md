@@ -1,5 +1,6 @@
 # strawberry-apollo-apq
-Support for Apollo's Automatic Persisted Queries in [Strawberry GraphQL](https://github.com/strawberry-graphql/strawberry) 🍓
+Supporting [Apollo's automatic persisted queries](https://www.apollographql.com/docs/apollo-server/performance/apq/)
+in [Strawberry GraphQL](https://github.com/strawberry-graphql/strawberry) 🍓
 ## Notes
 
 - Don't use this for production yet, unless you know what you're doing.

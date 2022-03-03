@@ -24,6 +24,8 @@ def test_graphql_route_not_persisting(client: FlaskClient):
 def test_graphql_route_no_persisted_query_step1(client):
     query = "{ __typename }"
 
+    # TODO mock and check the cache
+
     # Convert the query into a hash
     query_hash: str = hashlib.sha256(query.encode()).hexdigest()
     data: ExtensionData = {"version": 1, "sha256Hash": query_hash}

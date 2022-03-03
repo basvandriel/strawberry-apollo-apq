@@ -35,7 +35,12 @@ class ApolloGraphQLPersistanceView(GraphQLView):
 
     @property
     def persisting(self) -> bool:
-        return APOLLO_PERSTISANCE_EXT_KEY in get_extensions(self._data)
+        extensions = get_extensions(self._data)
+
+        if not extensions:
+            return False
+
+        return APOLLO_PERSTISANCE_EXT_KEY in extensions
 
     @property
     def query_hash(self) -> Optional[str]:

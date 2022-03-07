@@ -1,3 +1,5 @@
+from multiprocessing.shared_memory import ShareableList
+from typing import Callable
 from flask import Flask
 import pytest
 from strawberry import Schema, type, field
@@ -15,8 +17,6 @@ class Query:
 @pytest.fixture
 def app():
     app = Flask(__name__)
-    app.testing = True
-    app.debug = True
 
     app.add_url_rule(
         "/graphql",
@@ -33,3 +33,13 @@ def app():
 def client(app: Flask):
     with app.test_client() as client:
         yield client
+
+
+@pytest.fixture
+def str_to_sha256() -> Callable[[str], str]:
+    import hashlib
+
+    def func(value: str) -> str:
+        return hashlib.sha256(value.encode()).hexdigest()
+
+    return func

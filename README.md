@@ -12,7 +12,12 @@ in [Strawberry GraphQL](https://github.com/strawberry-graphql/strawberry) 🍓
 
 
 ## Benchmarks
-![Benchmarks](./histogram.svg)
+
+|                          | min (ms) | max (ms) | average (ms) |
+|--------------------------|----------|----------|--------------|
+| no persisting, default   | 1.9934   | 99.0644  | 2.5739       |
+| persistiging, not cached | 3.8509   | 211.6294 | 5.0793       |
+| persisting, cached       | 1.8495   | 21.6539  | 2.1182       |
 
 ## License
 The code in this library is licensed under MIT license. See the [LICENSE.md](LICENSE.md) file for more information.

@@ -1,3 +1,5 @@
+from tkinter import Variable
+from typing import Callable
 from flask import Flask
 from flask.testing import FlaskClient
 
@@ -10,17 +12,21 @@ from .conftest import Query
 
 from pytest_benchmark.fixture import BenchmarkFixture
 
-import hashlib
-from src.http import ExtensionData
 import json
+import src.flask.view
 
-from src.flask.view import cache
+
+QUERY = """
+query ($name: String!) {
+    hello(name: $name)
+}
+"""
+
+VARS = json.dumps({"name": "bas"})
 
 
 def test_no_persistance(benchmark: BenchmarkFixture):
     app = Flask(__name__)
-    app.testing = True
-    app.debug = True
 
     app.add_url_rule(
         "/graphql",
@@ -30,58 +36,74 @@ def test_no_persistance(benchmark: BenchmarkFixture):
         ),
     )
 
-    query = """
-    query ($name: String) {
-        hello(name: $name)
-    }
-    """
     with app.test_client() as client:
-        benchmark(
-            client.get,
-            "/graphql",
-            content_type="application/json",
-            json={"query": query, "variables": {"name": "bas"}},
-        )
+
+        def exec():
+            return client.get(
+                "/graphql",
+                content_type="application/json",
+                json={"query": QUERY, "variables": VARS},
+            )
+
+        result = benchmark(exec)
 
 
-def test_persisted_not_in_cache(client: FlaskClient, benchmark: BenchmarkFixture):
-    @benchmark
+def test_persisted_not_in_cache(
+    client: FlaskClient,
+    benchmark: BenchmarkFixture,
+    str_to_sha256: Callable[[str], str],
+    mocker,
+):
+    mocker.patch.object(src.flask.view, "cache", {})
+    hash = str_to_sha256(QUERY)
+
     def exec():
-        query = "{ __typename }"
-
-        # Convert the query into a hash
-        query_hash: str = hashlib.sha256(query.encode()).hexdigest()
-        data: ExtensionData = {"version": 1, "sha256Hash": query_hash}
+        data = {"version": 1, "sha256Hash": hash}
 
         # Initial persist, query hash is now in cache
         client.get(
             "/graphql",
             content_type="application/json",
-            query_string={"extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data})},
+            query_string={
+                "extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data}),
+                "variables": VARS,
+            },
         )
 
-        args = {
-            "query": query,
-            "extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data}),
-        }
-        client.get("/graphql", content_type="application/json", query_string=args)
-
-
-def test_persisted_cached(client: FlaskClient, benchmark: BenchmarkFixture):
-    query = "{ __typename }"
-
-    # Convert the query into a hash
-    query_hash: str = hashlib.sha256(query.encode()).hexdigest()
-
-    cache[query_hash] = query
-
-    @benchmark
-    def exec():
-        data: ExtensionData = {"version": 1, "sha256Hash": query_hash}
-
-        # Initial persist, query hash is now in cache
-        client.get(
+        return client.get(
             "/graphql",
             content_type="application/json",
-            query_string={"extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data})},
+            query_string={
+                "query": QUERY,
+                "variables": VARS,
+                "extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data}),
+            },
         )
+
+    result = benchmark(exec)
+    assert result is not None
+
+
+def test_persisted_cached(
+    client: FlaskClient,
+    benchmark: BenchmarkFixture,
+    str_to_sha256: Callable[[str], str],
+    mocker,
+):
+    hash = str_to_sha256(QUERY)
+    mocker.patch.object(src.flask.view, "cache", {hash: QUERY})
+
+    def exec():
+        return client.get(
+            "/graphql",
+            content_type="application/json",
+            query_string={
+                "extensions": json.dumps(
+                    {APOLLO_PERSTISANCE_EXT_KEY: {"version": 1, "sha256Hash": hash}}
+                ),
+                "variables": VARS,
+            },
+        )
+
+    result = benchmark(exec)
+    assert result is not None

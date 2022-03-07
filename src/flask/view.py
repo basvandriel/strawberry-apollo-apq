@@ -62,7 +62,7 @@ class ApolloGraphQLPersistanceView(GraphQLView):
         if isinstance(data, ImmutableMultiDict):
             data = data.to_dict()
 
-        # # Apollo doesn't send the variables encoded in json
+        # Apollo doesn't send the variables encoded in json
         if type(data.get("variables")) == str:
             data["variables"] = json.loads(data.get("variables"))
 

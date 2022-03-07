@@ -91,3 +91,38 @@ def test_persisted_query_hash_send_back_w_query(client):
     assert dict(request.args) == dict(args)
 
     assert response["data"]["__typename"] == "Query"
+
+
+def test_persisted_query_hash_already_in_cache_step3(client):
+    query = "{ __typename }"
+
+    # Convert the query into a hash
+    query_hash: str = hashlib.sha256(query.encode()).hexdigest()
+    data: ExtensionData = {"version": 1, "sha256Hash": query_hash}
+
+    ext_dict = {"extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data})}
+
+    # Initial persist, query hash is now in cache
+    client.get("/graphql", content_type="application/json", query_string=ext_dict)
+
+    # Save it with the query
+    client.get(
+        "/graphql",
+        content_type="application/json",
+        query_string={"query": query, **ext_dict},
+    )
+
+    result = client.get(
+        "/graphql", content_type="application/json", query_string=ext_dict
+    )
+
+    # Load up the data
+    response = result.data.decode()
+
+    # It's json so
+    response = json.loads(response)
+
+    assert query_hash in cache
+    assert cache.get(query_hash) == query
+
+    assert response["data"]["__typename"] == "Query"

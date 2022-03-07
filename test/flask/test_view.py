@@ -24,8 +24,14 @@ def test_graphql_route_not_persisting(client: FlaskClient):
     assert result.data.decode() == "No valid query was provided for the request"
 
 
+# Also covers str vars section
 def test_graphql_route_no_persisted_query_step1(client):
-    query = "{ __typename }"
+    query = """
+    query ($name: String) {
+        hello(name: $name)
+    }
+    """
+    vars: str = json.dumps({"name": "bas"})
 
     # Convert the query into a hash
     query_hash: str = hashlib.sha256(query.encode()).hexdigest()
@@ -35,7 +41,10 @@ def test_graphql_route_no_persisted_query_step1(client):
     result = client.get(
         "/graphql",
         content_type="application/json",
-        query_string={"extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data})},
+        query_string={
+            "extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data}),
+            "variables": vars,
+        },
     )
     # Load up the data
     response = result.data.decode()

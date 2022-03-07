@@ -12,6 +12,7 @@ in [Strawberry GraphQL](https://github.com/strawberry-graphql/strawberry) 🍓
 
 
 ## Benchmarks
+All benchmarks are made using the `pytest-benchmark` package.
 
 |                          | min (ms) | max (ms) | average (ms) |
 |--------------------------|----------|----------|--------------|

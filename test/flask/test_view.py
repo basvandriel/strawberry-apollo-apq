@@ -1,10 +1,13 @@
 import hashlib
 import json
+from flask import request
 
 from flask.testing import FlaskClient
 
 from src.http import ExtensionData
 from src import APOLLO_PERSTISANCE_EXT_KEY
+
+from src.flask.view import cache
 
 
 def test_graphql_route_multipartform(client: FlaskClient):
@@ -24,8 +27,6 @@ def test_graphql_route_not_persisting(client: FlaskClient):
 def test_graphql_route_no_persisted_query_step1(client):
     query = "{ __typename }"
 
-    # TODO mock and check the cache
-
     # Convert the query into a hash
     query_hash: str = hashlib.sha256(query.encode()).hexdigest()
     data: ExtensionData = {"version": 1, "sha256Hash": query_hash}
@@ -42,6 +43,9 @@ def test_graphql_route_no_persisted_query_step1(client):
     # It's json so
     response = json.loads(response)
 
+    assert query_hash in cache
+    assert cache.get(query_hash) is None
+
     assert response["data"] is None
     assert response["errors"] == [
         {
@@ -49,3 +53,41 @@ def test_graphql_route_no_persisted_query_step1(client):
             "extensions": {"code": "PERSISTED_QUERY_NOT_FOUND"},
         }
     ]
+
+
+def test_persisted_query_hash_send_back_w_query(client):
+    query = "{ __typename }"
+
+    # TODO mock and check the cache
+
+    # Convert the query into a hash
+    query_hash: str = hashlib.sha256(query.encode()).hexdigest()
+    data: ExtensionData = {"version": 1, "sha256Hash": query_hash}
+
+    # Initial persist, query hash is now in cache
+    client.get(
+        "/graphql",
+        content_type="application/json",
+        query_string={"extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data})},
+    )
+
+    args = {
+        "query": query,
+        "extensions": json.dumps({APOLLO_PERSTISANCE_EXT_KEY: data}),
+    }
+
+    result = client.get("/graphql", content_type="application/json", query_string=args)
+
+    # Load up the data
+    response = result.data.decode()
+
+    # It's json so
+    response = json.loads(response)
+
+    assert query_hash in cache
+    assert cache.get(query_hash) == query
+
+    # Check the request which it populates
+    assert dict(request.args) == dict(args)
+
+    assert response["data"]["__typename"] == "Query"

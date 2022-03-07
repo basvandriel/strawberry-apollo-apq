@@ -16,10 +16,14 @@ pathspec==0.9.0
 platformdirs==2.5.1
 pluggy==1.0.0
 py==1.11.0
+py-cpuinfo==8.0.0
+pygal==3.0.0
 Pygments==2.11.2
 pyparsing==3.0.7
 pytest==7.0.1
+pytest-benchmark==3.4.1
 pytest-cov==3.0.0
+pytest-mock==3.7.0
 python-dateutil==2.8.2
 python-multipart==0.0.5
 sentinel==0.3.0

@@ -10,8 +10,8 @@ from src.flask.view import ApolloGraphQLPersistanceView
 @type
 class Query:
     @field
-    def hello(name: str) -> str:
-        return f"hi {name}"
+    def hello(self) -> str:
+        return f"hi {self}"
 
 
 @pytest.fixture
